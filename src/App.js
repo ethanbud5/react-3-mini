@@ -12,7 +12,10 @@ class App extends Component {
 
     this.state = {
       vehiclesToDisplay: [],
-      buyersToDisplay: []
+      buyersToDisplay: [],
+      filterStatus:false,
+      filterColor:"",
+      filterMake:""
     };
 
     this.getVehicles = this.getVehicles.bind(this);
@@ -31,16 +34,38 @@ class App extends Component {
   getVehicles() {
     // axios (GET)
     // setState with response -> vehiclesToDisplay
+    axios.get("https://joes-autos.herokuapp.com/api/vehicles").then(res=>{
+      console.log(res)
+      // toast.success("Successfully got vehicles!")
+      this.setState({vehiclesToDisplay:res.data})
+    }).catch(err=>{
+        // toast.success("Error getting vehicles.")
+    })
   }
 
   getPotentialBuyers() {
     // axios (GET)
     // setState with response -> buyersToDisplay
+    axios.get("https://joes-autos.herokuapp.com/api/buyers").then(res=>{
+      console.log(res)
+      // toast.success("Successfully got buyers!")
+      this.setState({buyersToDisplay:res.data})
+    }).catch(err=>{
+        // toast.success("Error getting buyers.")
+    })
   }
+  
 
   sellCar(id) {
     // axios (DELETE)
     // setState with response -> vehiclesToDisplay
+    axios.delete("https://joes-autos.herokuapp.com/api/vehicles/"+id).then(res=>{
+      // toast.success("Successfully sold vehicle!")
+      console.log(res)
+      this.setState({vehiclesToDisplay:res.data.vehicles})
+    }).catch(err=>{
+        // toast.success("Error selling vehicle.")
+    })
   }
 
   filterByMake() {
@@ -48,6 +73,14 @@ class App extends Component {
 
     // axios (GET)
     // setState with response -> vehiclesToDisplay
+    axios.get("https://joes-autos.herokuapp.com/api/vehicles").then(res=>{
+      console.log(res)
+      // toast.success("Successfully got vehicles!")
+      let filteredList = res.data.filter(car=>car.make ===make);
+      this.setState({vehiclesToDisplay:filteredList, filterMake:make})
+    }).catch(err=>{
+        // toast.success("Error getting vehicles.")
+    })
   }
 
   filterByColor() {
@@ -55,11 +88,26 @@ class App extends Component {
 
     // axios (GET)
     // setState with response -> vehiclesToDisplay
+
+    axios.get("https://joes-autos.herokuapp.com/api/vehicles").then(res=>{
+      console.log(res)
+      // toast.success("Successfully got vehicles!")
+      let filteredList = res.data.filter(car=>car.color === color);
+      this.setState({vehiclesToDisplay:filteredList,filterColor:color})
+    }).catch(err=>{
+        // toast.success("Error getting vehicles.")
+    })
   }
 
   updatePrice(priceChange, id) {
     // axios (PUT)
     // setState with response -> vehiclesToDisplay
+    axios.put(`https://joes-autos.herokuapp.com/api/vehicles/${id}/${priceChange}`).then(res=>{
+      // toast.success("Successfully updated vehicle price!")
+      this.setState({vehiclesToDisplay:res.data.vehicles})
+    }).catch(err=>{
+        // toast.success("Error updating vehicle price.")
+    })
   }
 
   addCar() {
@@ -73,6 +121,13 @@ class App extends Component {
 
     // axios (POST)
     // setState with response -> vehiclesToDisplay
+    axios.post("https://joes-autos.herokuapp.com/api/vehicles",newCar).then(res=>{
+      console.log(res)
+      // toast.success("Successfully added vehicle!")
+      this.setState({vehiclesToDisplay:res.data.vehicles})
+    }).catch(err=>{
+        // toast.success("Error adding vehicle.")
+    })
   }
 
   addBuyer() {
@@ -84,11 +139,26 @@ class App extends Component {
 
     //axios (POST)
     // setState with response -> buyersToDisplay
+    axios.post("https://joes-autos.herokuapp.com/api/buyers",newBuyer).then(res=>{
+      console.log(res)
+       toast.success("Successfully got buyers!")
+      this.setState({buyersToDisplay:res.data.buyers})
+    }).catch(err=>{
+         toast.success("Error getting buyers.")
+    })
   }
 
   deleteBuyer(id) {
     // axios (DELETE)
     //setState with response -> buyersToDisplay
+
+    axios.delete("https://joes-autos.herokuapp.com/api/buyers/"+id).then(res=>{
+      // toast.success("Successfully sold vehicle!")
+      console.log(res)
+      this.setState({buyersToDisplay:res.data.buyers})
+    }).catch(err=>{
+        // toast.success("Error selling vehicle.")
+    })
   }
 
   nameSearch() {
@@ -96,6 +166,13 @@ class App extends Component {
 
     // axios (GET)
     // setState with response -> buyersToDisplay
+    axios.get("https://joes-autos.herokuapp.com/api/buyers?name="+searchLetters).then(res=>{
+      console.log(res)
+      // toast.success("Successfully got buyers!")
+      this.setState({buyersToDisplay:res.data})
+    }).catch(err=>{
+        // toast.success("Error getting buyers.")
+    })
   }
 
   byYear() {
@@ -103,6 +180,13 @@ class App extends Component {
 
     // axios (GET)
     // setState with response -> vehiclesToDisplay
+    axios.get("https://joes-autos.herokuapp.com/api/vehicles?year="+year).then(res=>{
+      console.log(res)
+      // toast.success("Successfully got vehicles!")
+      this.setState({vehiclesToDisplay:res.data})
+    }).catch(err=>{
+        // toast.success("Error getting vehicles.")
+    })
   }
 
   // Do not edit the code below
@@ -118,9 +202,25 @@ class App extends Component {
       });
   }
   // Do not edit the code above
+  filterBoth(e){
+    console.log("event",e)
+    if(e.target.value ==="on"){
+      this.setState({filterStatus:true})
+    }
+    else{
+      this.setState({filterStatus:false})
+    }
+  }
 
   render() {
-    const vehicles = this.state.vehiclesToDisplay.map(v => {
+    const vehicles = this.state.vehiclesToDisplay.filter(vehic=>{
+      if(this.state.filterStatus){
+        return(vehic.make===this.state.filterByMake&&vehic.color===this.state.filterColor)
+      }
+      else{
+        return true;
+      }
+    }).map(v => {
       return (
         <div key={v.id}>
           <p>Make: {v.make}</p>
@@ -172,7 +272,7 @@ class App extends Component {
         </div>
       );
     });
-
+    console.log(this.state)
     return (
       <div>
         <ToastContainer />
@@ -233,14 +333,15 @@ class App extends Component {
             <option value="" disabled>
               Filter by color
             </option>
-            <option value="red">Red</option>
-            <option value="green">Green</option>
+            <option value="Red">Red</option>
+            <option value="Green">Green</option>
             <option value="Purple">Purple</option>
-            <option value="indigo">Indigo</option>
-            <option value="violet">Violet</option>
-            <option value="teal">Teal</option>
+            <option value="Indigo">Indigo</option>
+            <option value="Violet">Violet</option>
+            <option value="Teal">Teal</option>
           </select>
-
+            {/* <span>Filter by Color and Make?</span>
+            <input type="checkbox" onClick={(e)=>this.filterBoth(e)}/> */}
           <input
             onChange={this.nameSearch}
             placeholder="Search by name"
